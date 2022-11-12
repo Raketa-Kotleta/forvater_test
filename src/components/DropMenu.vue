@@ -1,7 +1,7 @@
 <template>
-    <nav class="menu drop-menu" v-if="Visible" :style="'top:'+Top+'px; left:'+Left+'px;'">
-      <li class="drop-menu__item" v-for="(header,index) in this.HeadersArray" :key="index">
-          {{header}}
+    <nav class="menu drop-menu" ref="nav" v-if="Visible" :style="'top:'+Top+'px; left:'+Left+'px;'">
+      <li class="drop-menu__item" @click="header.action" v-for="(header,index) in this.HeadersArray" :key="index">
+          {{header.name}}
       </li>
     </nav>
 </template>

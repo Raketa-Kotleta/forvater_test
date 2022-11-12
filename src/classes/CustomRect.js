@@ -1,34 +1,37 @@
 
 import {Rect} from "konva/lib/shapes/Rect";
 import {_registerNode} from "konva/lib/Global";
-import Konva from "konva";
+
 
 class CustomRect extends Rect{
     #top;
     #bottom;
     #left;
     #right;
-    pointers;
+    #pointFill;
+    #rectFill;
     constructor(config) {
         super(config);
         this.#top = null;
         this.#bottom = null;
         this.#right = null;
         this.#left = null;
-        this.pointers = new Konva.Group({
-            x: this.x(),
-            y: this.y(),
-            rotation: 0
-        });
+        this.#pointFill = config.pointFill ?? 'gray';
+        this.#rectFill = config.rectFill ?? 'transparent';
     }
     _sceneFunc(context) {
-        this.fill('transparent');
+        this.fill(this.#rectFill);
         super._sceneFunc(context);
+
         context.beginPath();
-        this.fill('black');
-        context.arc(this.width()/2, 0, 5, 0, 2 * Math.PI, false);
+            this.fill(this.#pointFill);
+            context.arc(this.width()/2, 0, 7, 0, 2 * Math.PI, false);
         context.closePath();
+
         context.fillStrokeShape(this);
+    }
+    drawPoints(color){
+        this.#pointFill = color;
     }
 }
 Rect.prototype.className = 'CustomRect';

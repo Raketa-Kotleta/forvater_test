@@ -9,7 +9,6 @@
 
 <script>
 import Konva from "konva";
-// import CustomRect from "@/classes/CustomRect";
 import DropMenu from "@/components/DropMenu";
 import CustomRect from "@/classes/CustomRect";
 export default {
@@ -21,7 +20,14 @@ export default {
     return{
         stage: null,
         layout: null,
-        menu_headers: ["Добавить квадрат", "Добавить стрелку"],
+        menu_headers: [{
+          name: "Добавить квадрат",
+          action: this.addRect,
+        },
+        {
+          name: "Добавить стрелку",
+          action: this.addRect,
+        }],
         menu_visibility: false,
         menu_top: 0,
         menu_left: 0,
@@ -29,7 +35,19 @@ export default {
   },
   methods:{
     addRect(){
-
+      let rect = new CustomRect({
+        id: this.layout.children.length,
+        x: this.menu_left,
+        y: this.menu_top,
+        width: 100,
+        height: 100,
+        pointFill: 'rgb(100,100,100)',
+        rectFill: 'white',
+        stroke: 'black',
+        strokeWidth: 1,
+        draggable: true
+      });
+      this.layout.add(rect);
     }
   },
   mounted() {
@@ -38,33 +56,26 @@ export default {
     }
     document.addEventListener('contextmenu', (e)=>{
       e.preventDefault()
-
       this.menu_visibility = true;
       this.menu_left = window.innerWidth-e.x < 205 ? window.innerWidth - 205:e.x;
       this.menu_top = e.y;
     });
-
-
 
     this.stage = new Konva.Stage({
       container: 'canvas',
       width: window.innerWidth,
       height: window.innerHeight,
     });
-
     this.layout = new Konva.Layer();
-    this.stage.add(this.layout);
-    this.rect1 = new CustomRect({
-      x: 20,
-      y: 20,
-      width: 100,
-      height: 100,
-      fill: 'blue',
-      stroke: 'black',
-      strokeWidth: 1,
-      draggable: true
+    this.layout.on('mouseover', function (e) {
+      e.target.drawPoints('black');
+      e.target.draw()
     });
-    this.layout.add(this.rect1);
+    this.layout.on('mouseout', function (e) {
+      e.target.drawPoints('gray');
+      e.target.draw()
+    });
+    this.stage.add(this.layout);
 
   }
 }
