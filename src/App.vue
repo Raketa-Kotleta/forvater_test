@@ -18,64 +18,105 @@ export default {
   },
   data(){
     return{
-        stage: null,
-        layout: null,
-        menu_headers: [{
-          name: "Добавить квадрат",
-          action: this.addRect,
-        },
-        {
-          name: "Добавить стрелку",
-          action: this.addRect,
-        }],
+
+        menu_headers: [],
         menu_visibility: false,
         menu_top: 0,
         menu_left: 0,
     }
   },
   methods:{
-    addRect(){
+    addShape(){
       let rect = new CustomRect({
-        id: this.layout.children.length,
+        id: Math.trunc(Math.random()*1000),
         x: this.menu_left,
         y: this.menu_top,
         width: 100,
         height: 100,
+        pointRadius: 7,
         pointFill: 'rgb(100,100,100)',
         rectFill: 'white',
         stroke: 'black',
         strokeWidth: 1,
         draggable: true
       });
-      this.layout.add(rect);
+      this.$store.commit('addShape',{
+        layer: this.$store.getters.layer('main'),
+        shape: rect,
+      })
+      rect.draw();
+
+    },
+    dropShape(shape){
+      console.log(shape.id());
+      let s = this.$store.getters.shape('main',shape.id());
+      const payload = {
+        layer: this.$store.getters.layer('main'),
+        shape: s,
+      };
+      this.$store.commit('dropShape', payload);
+      this.$store.getters.layer('main').children[0].draw();
     }
   },
   mounted() {
     document.onclick = ()=>{
       this.menu_visibility = false;
     }
-    document.addEventListener('contextmenu', (e)=>{
-      e.preventDefault()
-      this.menu_visibility = true;
-      this.menu_left = window.innerWidth-e.x < 205 ? window.innerWidth - 205:e.x;
-      this.menu_top = e.y;
+    this.$store.dispatch('initDefaultStage','canvas');
+    this.$store.commit("addLayer",new Konva.Layer({id: 'main'}));
+    this.$store.commit("setEventListener",{
+      node: this.$store.getters.stage,
+      event: 'contextmenu',
+      func:  (e)=>{
+        e.evt.preventDefault();
+        if (e.target instanceof Konva.Stage)
+          this.menu_headers = [{
+            name: "Добавить квадрат",
+            action: this.addShape,
+          },
+            {
+              name: "Добавить стрелку",
+              action: this.addShape,
+            }];
+        this.menu_visibility = true;
+        this.menu_left = window.innerWidth-e.evt.x < 205 ? window.innerWidth - 205:e.evt.x ;
+        this.menu_top = e.evt.y;
+      }
+    });
+    this.$store.commit('setEventListener',{
+      node: this.$store.getters.layer('main'),
+      event: 'contextmenu',
+      func: (e) => {
+        e.evt.preventDefault();
+        this.menu_headers = [{
+          name: "Удалить квадрат",
+          action: ()=>this.dropShape(e.target)
+        },
+        {
+          name: "Изменить квадрат",
+          action: this.addShape,
+        }];
+      }
     });
 
-    this.stage = new Konva.Stage({
-      container: 'canvas',
-      width: window.innerWidth,
-      height: window.innerHeight,
+    this.$store.commit('setEventListener', {
+      node: this.$store.getters.layer('main'),
+      event: 'mouseover',
+      func: (e) => {
+        e.target.drawPoints('black');
+        e.target.draw()
+      }
     });
-    this.layout = new Konva.Layer();
-    this.layout.on('mouseover', function (e) {
-      e.target.drawPoints('black');
-      e.target.draw()
+    this.$store.commit('setEventListener', {
+      node: this.$store.getters.layer('main'),
+      event: 'mouseout',
+      func: (e) => {
+        e.target.drawPoints('gray');
+        e.target.draw()
+      }
     });
-    this.layout.on('mouseout', function (e) {
-      e.target.drawPoints('gray');
-      e.target.draw()
-    });
-    this.stage.add(this.layout);
+  },
+  updated() {
 
   }
 }

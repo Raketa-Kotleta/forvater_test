@@ -10,6 +10,7 @@ class CustomRect extends Rect{
     #right;
     #pointFill;
     #rectFill;
+    #pointRadius;
     constructor(config) {
         super(config);
         this.#top = null;
@@ -18,6 +19,7 @@ class CustomRect extends Rect{
         this.#left = null;
         this.#pointFill = config.pointFill ?? 'gray';
         this.#rectFill = config.rectFill ?? 'transparent';
+        this.#pointRadius = config.pointRadius ?? 0;
     }
     _sceneFunc(context) {
         this.fill(this.#rectFill);
@@ -25,7 +27,7 @@ class CustomRect extends Rect{
 
         context.beginPath();
             this.fill(this.#pointFill);
-            context.arc(this.width()/2, 0, 7, 0, 2 * Math.PI, false);
+            context.arc(this.width()/2, 0, this.#pointRadius, 0, 2 * Math.PI, false);
         context.closePath();
 
         context.fillStrokeShape(this);
