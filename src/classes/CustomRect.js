@@ -13,10 +13,10 @@ class CustomRect extends Rect{
     #pointRadius;
     constructor(config) {
         super(config);
-        this.#top = null;
-        this.#bottom = null;
-        this.#right = null;
-        this.#left = null;
+        this.#top = false;
+        this.#bottom = false;
+        this.#right = false;
+        this.#left = false;
         this.#pointFill = config.pointFill ?? 'gray';
         this.#rectFill = config.rectFill ?? 'transparent';
         this.#pointRadius = config.pointRadius ?? 0;
@@ -26,14 +26,68 @@ class CustomRect extends Rect{
         super._sceneFunc(context);
 
         context.beginPath();
-            this.fill(this.#pointFill);
-            context.arc(this.width()/2, 0, this.#pointRadius, 0, 2 * Math.PI, false);
+            this.fill(this.pointFill);
+            if (this.top) context.arc(this.width()/2, 0, this.pointRadius, 0, 2 * Math.PI, false);
+            context.moveTo(this.width(), this.height()/2);
+            if (this.right) context.arc(this.width(), this.height()/2, this.pointRadius, 0, 2 * Math.PI, false);
+            context.moveTo(this.width()/2, this.height());
+            if (this.bottom) context.arc(this.width()/2, this.height(), this.pointRadius, 0, 2 * Math.PI, false);
+            context.moveTo(0, this.height()/2);
+            if (this.left) context.arc(0, this.height()/2, this.pointRadius, 0, 2 * Math.PI, false);
         context.closePath();
 
         context.fillStrokeShape(this);
     }
-    drawPoints(color){
-        this.#pointFill = color;
+    get top() {
+        return this.#top;
+    }
+
+    set top(value) {
+        this.#top = value;
+    }
+    get left() {
+        return this.#left;
+    }
+
+    set left(value) {
+        this.#left = value;
+    }
+    get bottom() {
+        return this.#bottom;
+    }
+
+    set bottom(value) {
+        this.#bottom = value;
+    }
+    get right() {
+        return this.#right;
+    }
+
+    set right(value) {
+        this.#right = value;
+    }
+    get pointFill() {
+        return this.#pointFill;
+    }
+
+    set pointFill(value) {
+        this.#pointFill= value;
+    }
+    get rectFill() {
+        return this.#rectFill;
+    }
+
+    set rectFill(value) {
+        this.#rectFill = value;
+    }
+    get pointRadius() {
+        return this.#pointRadius;
+    }
+
+    set pointRadius(value) {
+        if (value < 0)
+            value = 0;
+        this.#pointRadius = value;
     }
 }
 Rect.prototype.className = 'CustomRect';

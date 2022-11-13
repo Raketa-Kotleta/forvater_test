@@ -31,8 +31,8 @@ export default new Vuex.Store({
     addShape(state,{layer, shape}){
       layer.add(shape);
     },
-    dropShape(state,{layer, shape}){
-      layer.remove(shape);
+    dropShape(state, shape){
+      shape.destroy();
     },
     setEventListener(state,{node, event, func}){
       node.on(event, func);
