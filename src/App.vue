@@ -1,3 +1,4 @@
+<script src="../node_modules/konva/lib/shapes/Arrow.js"></script>
 <template>
  <div id="app">
    <drop-menu ref="drop_menu" :visible="menu_visibility" :top="menu_top" :left="menu_left"  :headers-array="menu_headers"></drop-menu>
@@ -11,6 +12,10 @@
 import Konva from "konva";
 import DropMenu from "@/components/DropMenu";
 import CustomRect from "@/classes/CustomRect";
+import ArrowLine from "@/classes/ArrowLine";
+import DynamicArrow from "@/classes/DynamicArrow";
+// import DynamicArrow from "@/classes/DynamicArrow";
+// import ArrowLine from "@/classes/ArrowLine";
 export default {
   name: 'App',
   components: {
@@ -55,6 +60,78 @@ export default {
     addRectPoint(side,shape){
       shape[side] = true;
       shape.draw();
+    },
+    addArrow(){
+      const halfwidth = 120;
+      const group = new Konva.Group({
+        id: 'arrow' + this.$store.getters.layer('main').children.filter(it => it instanceof Konva.Group).length,
+      })
+      const config = {
+        x: 0,
+        y: 0,
+        strokeWidth: 4,
+        fill: 'black',
+        stroke: 'black',
+        draggable: true,
+      }
+      const line = new ArrowLine({
+        ...config,
+        points: [this.menu_left, this.menu_top, this.menu_left+halfwidth, this.menu_top],
+        direction: 'row'
+      });
+      line.on('dragstart',(e)=>{
+        let group = e.target.parent;
+        let children = group.children;
+        let index = children.indexOf(e.target);
+        if (children[index+1]){
+          console.log(children[index].direction);
+          let target = group.children.shift();
+          group.children.unshift(new ArrowLine({
+            ...config,
+            id:"sdf",
+            points:[e.target.attrs.points[2],e.target.attrs.points[3],children[index].attrs.points[0],children[index].attrs.points[1]],
+          }));
+          group.children.unshift(target);
+        }
+        group.draw();
+        console.log(group);
+      });
+      line.on('dragmove', (e)=>{
+        let group = e.target.parent;
+        let index = group.children.indexOf(e.target);
+        group.children[index+1].attrs.points[0] = group.children.at(index).attrs.points[2] + group.children[index].x();
+        group.children[index+1].attrs.points[1] = group.children.at(index).attrs.points[3] + group.children[index].y();
+        group.draw();
+      });
+      line.on('dragend',(e)=>{
+        const group = e.target.parent;
+        let index = group.children.indexOf(e.target);
+        const children = group.children;
+        group.removeChildren();
+        group.add(...children);
+        if (group.children[index+1]){
+          console.log(group.children[index].eventListeners);
+          group.children[index+1].on('dragstart', group.children[index].eventListeners.dragstart[0].handler);
+          group.children[index+1].on('dragmove', group.children[index].eventListeners.dragmove[1].handler);
+          group.children[index+1].on('dragend', group.children[index].eventListeners.dragend[0].handler);
+        }
+
+      })
+      const arrow = new DynamicArrow({
+        ...config,
+        points:[line.points()[2],line.points()[3], line.points()[2]+halfwidth, line.points()[3]],
+        direction: 'row',
+      });
+      group.add(line,arrow);
+
+      this.$store.commit('addGroup',{
+        container: this.$store.getters.layer('main'),
+        group: group
+      })
+
+    },
+    dropArrow(){
+
     }
   },
   mounted() {
@@ -75,7 +152,7 @@ export default {
           },
             {
               name: "Добавить стрелку",
-              action: this.addShape,
+              action: this.addArrow,
             }];
         this.menu_visibility = true;
         this.menu_left = window.innerWidth-e.evt.x < 205 ? window.innerWidth - 205:e.evt.x ;
@@ -134,7 +211,7 @@ export default {
         e.target.draw()
       }
     });
-    console.log(this.$store.getters.layer('main').toJSON());
+
   },
   updated() {
 

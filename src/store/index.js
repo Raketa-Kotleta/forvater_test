@@ -13,7 +13,6 @@ export default new Vuex.Store({
     stage: state => state.stage,
     layers: state => state.layers[0],
     layer: (state) => (layerId) => state.layers.find(it => it.id() == layerId),
-    shape: (state) => (layerId,shapeId) => state.layers.find(it => it.id() == layerId).find(it => it.id() == shapeId),
   },
   mutations: {
     setStage(state,stage){
@@ -26,6 +25,12 @@ export default new Vuex.Store({
         if (!layer.id) layer.id = 'layer' + state.layers.length;
         state.stage.add(layer);
         state.layers.push(layer);
+      }
+    },
+    addGroup(state, {container,group}){
+      if (container) {
+        if (!group.id) group.id = 'group' + state.layers.length;
+        container.add(group);
       }
     },
     addShape(state,{layer, shape}){
