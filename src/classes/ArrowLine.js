@@ -14,6 +14,84 @@ class ArrowLine extends Line{
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
     }
+    indexInParent(){
+        return this.parent.children.indexOf(this);
+    }
+    length(){
+        return Math.sqrt((this.points()[0] - this.points()[2])**2+(this.points()[1]-this.points()[3])**2);
+    }
+    notify(){
+        if (this.parent.children[this.indexInParent()+1])
+            this.parent.children[this.indexInParent()+1].update();
+        if (this.parent.children[this.indexInParent()-1])
+            this.parent.children[this.indexInParent()-1].update();
+    }
+    update(){
+        console.log(this.indexInParent() + 'получил уведомление');
+        if (this.parent.children[this.indexInParent()-1]){
+            this.points()[0] = this.parent.children[this.indexInParent()-1].attrs.points[2] + this.parent.children[this.indexInParent()-1].x() - this.x();
+            this.points()[1] = this.parent.children[this.indexInParent()-1].attrs.points[3] + this.parent.children[this.indexInParent()-1].y() - this.y();
+        }
+        if (this.parent.children[this.indexInParent()+1]){
+            this.points()[2] = this.parent.children[this.indexInParent()+1].attrs.points[0] + this.parent.children[this.indexInParent()+1].x() - this.x();
+            this.points()[3] = this.parent.children[this.indexInParent()+1].attrs.points[1] + this.parent.children[this.indexInParent()+1].y() - this.y();
+        }
+        if (Math.abs(this.points()[0] - this.points()[2]) < this.length() && Math.abs(this.points()[1] - this.points()[3]) < this.length()) {
+            this.breakline();
+        }
+
+    }
+    breakline(){
+        let newLine = new ArrowLine({
+            x: 0,
+            y: 0,
+            strokeWidth: this.strokeWidth(),
+            fill: this.fill(),
+            stroke: this.stroke(),
+            draggable: this.draggable(),
+            points: [],
+            direction: this.direction == 'row' ? 'column' : 'row',
+        });
+        if (this.direction == 'row'){
+            if (this.points()[1] > this.points()[3]){
+                newLine.points()[0] = this.points()[2];
+                newLine.points()[1] = this.points()[1];
+                newLine.points()[2] = this.points()[2];
+                newLine.points()[3] = this.points()[3];
+                this.points()[1] = this.points()[3];
+                this.parent.children.splice(this.indexInParent(),0, newLine);
+            }
+            else if(this.points()[1] < this.points()[3]){
+                newLine.points()[2] = this.points()[0];
+                newLine.points()[3] = this.points()[1];
+                newLine.points()[0] = this.points()[0]
+                newLine.points()[1] = this.points()[3];
+                this.points()[3] = this.points()[1];
+                this.parent.children.splice(this.indexInParent()+1,0, newLine);
+
+            }
+        }
+        else{
+            if (this.points()[0] > this.points()[2]){
+                newLine.points()[2] = this.points()[0];
+                newLine.points()[3] = this.points()[1];
+                newLine.points()[0] = this.points()[3];
+                newLine.points()[1] = this.points()[1];
+                this.points()[0] = this.points()[2];
+                this.parent.children.splice(this.indexInParent(),0, newLine);
+
+            }
+            else if(this.points()[0] < this.points()[2]){
+                newLine.points()[0] = this.points()[0];
+                newLine.points()[1] = this.points()[3];
+                newLine.points()[2] = this.points()[2];
+                newLine.points()[3] = this.points()[3];
+                this.points()[2] = this.points()[0];
+                this.parent.children.splice(this.indexInParent()+1,0, newLine);
+            }
+
+        }
+    }
     _sceneFunc(context) {
         super._sceneFunc(context);
         context.beginPath();
@@ -28,37 +106,9 @@ class ArrowLine extends Line{
         context.closePath();
         context.fillStrokeShape(this);
     }
-    _onDragStart(e){
-        let group = this.parent;
-        let children = group.children;
-        let index = children.indexOf(this);
-        console.log(e);
-        let config = {
-            x: 0,
-            y: 0,
-            strokeWidth: this.strokeWidth(),
-            fill: this.fill(),
-            stroke: this.stroke(),
-            draggable: this.draggable(),
-            direction: this.direction == 'row' ? 'column' : 'row',
-        }
-        if (children[index + 1]) {
-            if (children[index + 1].direction == this.direction) {
-                let target = group.children.shift();
-                group.children.unshift(new ArrowLine({
-                    ...config,
-                    points: [this.attrs.points[2], this.attrs.points[3], children[index].attrs.points[0], children[index].attrs.points[1]],
-                }));
-                group.children.unshift(target);
-            }
+    _onDragStart(){
 
-        }
-        if (children[index - 1]) {
-            if (children[index - 1].direction == this.direction) {
-                //let left_half = children.slice(0,index)
-                console.log('hello');
-            }
-        }
+
 
     }
     _onDragMove(){
@@ -68,20 +118,10 @@ class ArrowLine extends Line{
         if (this.direction == 'column'){
             this.y(0)
         }
-        let group = this.parent;
-        let index = group.children.indexOf(this);
-        if (group.children[index+1]){
-
-            group.children[index+1].attrs.points[0] = group.children.at(index).attrs.points[2] + group.children[index].x() -  group.children[index+1].x();
-            group.children[index+1].attrs.points[1] = group.children.at(index).attrs.points[3] + group.children[index].y() -  group.children[index+1].y();
-        }
-        if (group.children[index-1]){
-            group.children[index-1].attrs.points[2] = group.children[index].attrs.points[0] + group.children[index].x() - group.children[index-1].x();
-            group.children[index-1].attrs.points[3] = group.children[index].attrs.points[1] + group.children[index].y() - group.children[index-1].y();
-        }
     }
 
     _onDragEnd(){
+        this.notify();
         const group = this.parent;
         const children = group.children;
         group.removeChildren();

@@ -74,17 +74,17 @@ export default {
         stroke: 'black',
         draggable: true,
       }
-      const line = new ArrowLine({
+      const line1 = new ArrowLine({
         ...config,
         points: [this.menu_left, this.menu_top, this.menu_left+halfwidth, this.menu_top],
         direction: 'row'
       });
       const arrow = new DynamicArrow({
         ...config,
-        points:[line.points()[2],line.points()[3], line.points()[2]+halfwidth, line.points()[3]],
+        points:[line1.points()[2],line1.points()[3], line1.points()[2]+halfwidth, line1.points()[3]],
         direction: 'row',
       });
-      group.add(line,arrow);
+      group.add(line1,arrow);
 
       this.$store.commit('addGroup',{
         container: this.$store.getters.layer('main'),
