@@ -3,18 +3,15 @@ const DEFAULT_DRAG_MODE = 'move';
 const STRETCH_DRAG_MODE = 'stretch';
 class ArrowLine extends Line{
     #ARC_RADIUS = 2;
-    direction;
-    #connection;
-
-
-
-    #dragmode;
+    _direction;
+    _connection;
+    _dragmode;
     constructor(config) {
         super(config)
         config.draggable = true;
-        this.direction = config.direction;
-        this.#dragmode = DEFAULT_DRAG_MODE;
-        this.#connection = config.connection ?? null;
+        this._direction = config.direction;
+        this._dragmode = DEFAULT_DRAG_MODE;
+        this._connection = config.connection ?? null;
         this.on('dragstart', this._onDragStart);
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
@@ -32,7 +29,6 @@ class ArrowLine extends Line{
         })
     }
     update(){
-        console.log(this.indexInParent() + 'получил уведомление');
         if (this.parent.children[this.indexInParent()-1]){
             this.points()[0] = this.parent.children[this.indexInParent()-1].attrs.points[2] + this.parent.children[this.indexInParent()-1].x() - this.x();
             this.points()[1] = this.parent.children[this.indexInParent()-1].attrs.points[3] + this.parent.children[this.indexInParent()-1].y() - this.y();
@@ -117,7 +113,7 @@ class ArrowLine extends Line{
     }
     _onDragStart(e){
         if (Math.sqrt((e.evt.x - (this.points()[0] + this.x()))**2 + (e.evt.y - (this.points()[1]+this.y()))**2) < 10 && this.indexInParent() == 0)
-            this.#dragmode = STRETCH_DRAG_MODE;
+            this.dragmode = STRETCH_DRAG_MODE;
     }
     _onDragMove(e){
         if (this.direction == 'row'){
@@ -126,7 +122,7 @@ class ArrowLine extends Line{
         if (this.direction == 'column'){
             this.y(0)
         }
-        if (this.#dragmode == STRETCH_DRAG_MODE){
+        if (this.dragmode == STRETCH_DRAG_MODE){
             this.x(0);
             this.y(0);
             this.points()[0] = e.evt.x;
@@ -136,7 +132,7 @@ class ArrowLine extends Line{
     }
 
     _onDragEnd(){
-        if (this.#dragmode == STRETCH_DRAG_MODE)
+        if (this.dragmode == STRETCH_DRAG_MODE)
             this.breakline();
         else
             this.notify(
@@ -148,10 +144,32 @@ class ArrowLine extends Line{
             );
         const group = this.parent;
         const children = group.children;
+        children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
         group.removeChildren();
         group.add(...children);
-        group.children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
-        this.#dragmode = DEFAULT_DRAG_MODE
+        this.dragmode = DEFAULT_DRAG_MODE;
+    }
+    get direction() {
+        return this._direction;
+    }
+
+    set direction(value) {
+        this._direction = value;
+    }
+
+    get connection() {
+        return this._connection;
+    }
+
+    set connection(value) {
+        this._connection = value;
+    }
+    get dragmode() {
+        return this._dragmode;
+    }
+
+    set dragmode(value) {
+        this._dragmode = value;
     }
 }
 export default ArrowLine;

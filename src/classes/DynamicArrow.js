@@ -4,14 +4,14 @@ import ArrowLine from "@/classes/ArrowLine";
 const DEFAULT_DRAG_MODE = 'move';
 const STRETCH_DRAG_MODE = 'stretch';
 class DynamicArrow extends Arrow{
-    _direction
-    #to;
-    #dragmode;
+    _direction;
+    _connection;
+    _dragmode;
     constructor(config) {
         super(config);
-        this.#to = config.to ?? null;
-        this.#dragmode = DEFAULT_DRAG_MODE;
+        this._dragmode = DEFAULT_DRAG_MODE;
         this._direction = config.direction;
+        this._connection = config.connection ?? null;
         this.on('dragstart', this._onDragStart);
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
@@ -73,7 +73,7 @@ class DynamicArrow extends Arrow{
     }
     _onDragStart(e){
         if (Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2) < 10)
-            this.#dragmode = STRETCH_DRAG_MODE;
+            this.dragmode = STRETCH_DRAG_MODE;
     }
     _onDragMove(e){
         if (this.direction == 'row'){
@@ -82,7 +82,7 @@ class DynamicArrow extends Arrow{
         if (this.direction == 'column'){
             this.y(0);
         }
-        if (this.#dragmode == STRETCH_DRAG_MODE){
+        if (this.dragmode == STRETCH_DRAG_MODE){
             this.x(0);
             this.y(0);
             this.points()[2] = e.evt.x;
@@ -91,7 +91,7 @@ class DynamicArrow extends Arrow{
         }
     }
     _onDragEnd(){
-        if (this.#dragmode == STRETCH_DRAG_MODE)
+        if (this.dragmode == STRETCH_DRAG_MODE)
             this.breakline();
         else
             this.notify(
@@ -106,7 +106,7 @@ class DynamicArrow extends Arrow{
         group.removeChildren();
         group.add(...children);
         group.children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
-        this.#dragmode = DEFAULT_DRAG_MODE;
+        this.dragmode = DEFAULT_DRAG_MODE;
     }
     get direction() {
         return this._direction;
@@ -114,6 +114,21 @@ class DynamicArrow extends Arrow{
 
     set direction(value) {
         this._direction = value;
+    }
+    get dragmode() {
+        return this._dragmode;
+    }
+
+    set dragmode(value) {
+        this._dragmode = value;
+    }
+
+    get connection() {
+        return this._connection;
+    }
+
+    set connection(value) {
+        this._connection = value;
     }
 }
 
