@@ -1,17 +1,16 @@
 import {Arrow} from "konva/lib/shapes/Arrow";
 import ArrowLine from "@/classes/ArrowLine";
+import {_registerNode} from "konva/lib/Global";
 
 const DEFAULT_DRAG_MODE = 'move';
 const STRETCH_DRAG_MODE = 'stretch';
+
 class DynamicArrow extends Arrow{
-    _direction;
-    _connection;
-    _dragmode;
     constructor(config) {
         super(config);
-        this._dragmode = DEFAULT_DRAG_MODE;
-        this._direction = config.direction;
-        this._connection = config.connection ?? null;
+        this.attrs.dragmode = DEFAULT_DRAG_MODE;
+        this.attrs.direction = config.direction;
+        this.attrs.connection = config.connection ?? null;
         this.on('dragstart', this._onDragStart);
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
@@ -72,7 +71,8 @@ class DynamicArrow extends Arrow{
 
     }
     _onDragStart(e){
-        if (Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2) < 10)
+        console.log(Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2));
+        if (Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2) < 20)
             this.dragmode = STRETCH_DRAG_MODE;
     }
     _onDragMove(e){
@@ -108,28 +108,32 @@ class DynamicArrow extends Arrow{
         group.children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
         this.dragmode = DEFAULT_DRAG_MODE;
     }
+    toJSON() {
+        return super.toJSON();
+    }
+
     get direction() {
-        return this._direction;
+        return this.attrs.direction;
     }
 
     set direction(value) {
-        this._direction = value;
+        this.attrs.direction = value;
     }
     get dragmode() {
-        return this._dragmode;
+        return this.attrs.dragmode;
     }
 
     set dragmode(value) {
-        this._dragmode = value;
+        this.attrs.dragmode = value;
     }
-
     get connection() {
-        return this._connection;
+        return this.attrs.connection;
     }
 
     set connection(value) {
-        this._connection = value;
+        this.attrs.connection = value;
     }
 }
-
+DynamicArrow.prototype.className = 'DynamicArrow';
+_registerNode(DynamicArrow);
 export default DynamicArrow;

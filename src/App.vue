@@ -2,6 +2,7 @@
 <template>
  <div id="app">
    <drop-menu ref="drop_menu" :visible="menu_visibility" :top="menu_top" :left="menu_left"  :headers-array="menu_headers"></drop-menu>
+   <button @click="$store.dispatch('setToLocalStorage')">save</button>
   <div id="canvas">
 
   </div>
@@ -14,6 +15,8 @@ import DropMenu from "@/components/DropMenu";
 import CustomRect from "@/classes/CustomRect";
 import ArrowLine from "@/classes/ArrowLine";
 import DynamicArrow from "@/classes/DynamicArrow";
+import store from "@/store";
+
 // import DynamicArrow from "@/classes/DynamicArrow";
 // import ArrowLine from "@/classes/ArrowLine";
 export default {
@@ -32,7 +35,7 @@ export default {
   methods:{
     addShape(){
       let rect = new CustomRect({
-        id: this.$store.getters.layer('main').length,
+        id: store.getters.layer('main').length,
         x: this.menu_left,
         y: this.menu_top,
         width: 100,
@@ -44,14 +47,16 @@ export default {
         strokeWidth: 1,
         draggable: true
       });
-      this.$store.commit('addShape',{
-        layer: this.$store.getters.layer('main'),
+      store.commit('addShape',{
+        layer: store.getters.layer('main'),
         shape: rect,
       })
       rect.draw();
+      console.log(store.getters.layer('main').children);
+      store.getters.stage.draw();
     },
     dropShape(shape){
-      this.$store.commit('dropShape', shape);
+      store.commit('dropShape', shape);
     },
     removeRectPoint(side,shape){
       shape[side] = false;
@@ -64,7 +69,7 @@ export default {
     addArrow(){
       const halfwidth = 120;
       const group = new Konva.Group({
-        id: 'arrow' + this.$store.getters.layer('main').children.filter(it => it instanceof Konva.Group).length,
+        id: 'arrow' + store.getters.layer('main').children.filter(it => it instanceof Konva.Group).length,
       })
       const config = {
         x: 0,
@@ -86,97 +91,113 @@ export default {
       });
       group.add(line,arrow);
 
-      this.$store.commit('addGroup',{
-        container: this.$store.getters.layer('main'),
+      store.commit('addGroup',{
+        container: store.getters.layer('main'),
         group: group
       })
+      console.log(group);
 
     },
-    dropArrow(){
+  },
+  created() {
 
-    }
   },
   mounted() {
+    store.dispatch('getFromLocalStorage');
+    // console.log(store.getters.stage.eventListeners);
+    console.log(store.getters.layer('main').children[0]);
+
+    console.log(store.getters.layer('main').children[0]);
     document.onclick = ()=>{
       this.menu_visibility = false;
     }
-    this.$store.dispatch('initDefaultStage','canvas');
-    this.$store.commit("addLayer",new Konva.Layer({id: 'main'}));
-    this.$store.commit("setEventListener",{
-      node: this.$store.getters.stage,
-      event: 'contextmenu',
-      func:  (e)=>{
-        e.evt.preventDefault();
-        if (e.target instanceof Konva.Stage)
+    let init = ()=>{
+
+      store.commit("setEventListener",{
+        node: store.getters.stage,
+        event: 'contextmenu',
+        func:  (e)=>{
+          e.evt.preventDefault();
+          if (e.target instanceof Konva.Stage)
+            this.menu_headers = [{
+              name: "Добавить квадрат",
+              action: this.addShape,
+            },
+              {
+                name: "Добавить стрелку",
+                action: this.addArrow,
+              }];
+          this.menu_visibility = true;
+          this.menu_left = window.innerWidth-e.evt.x < 205 ? window.innerWidth - 205:e.evt.x ;
+          this.menu_top = e.evt.y;
+        }
+      });
+      store.commit('setEventListener',{
+        node: store.getters.layer('main'),
+        event: 'contextmenu',
+        func: (e) => {
+          e.evt.preventDefault();
           this.menu_headers = [{
-            name: "Добавить квадрат",
-            action: this.addShape,
+            name: (e.target.top ? "Удалить":"Добавить") + " розетку сверху",
+            action: ()=>{
+              e.target.top ? this.removeRectPoint('top', e.target):this.addRectPoint('top', e.target)
+            }
           },
             {
-              name: "Добавить стрелку",
-              action: this.addArrow,
+              name: (e.target.right ? "Удалить":"Добавить") + ' розетку справа',
+              action: ()=>{
+                e.target.right ? this.removeRectPoint('right', e.target):this.addRectPoint('right', e.target)
+              }
+            },
+            {
+              name: (e.target.bottom ? "Удалить":"Добавить") + ' розетку снизу',
+              action: ()=>{
+                e.target.bottom ? this.removeRectPoint('bottom', e.target):this.addRectPoint('bottom', e.target)
+              }
+            },
+            {
+              name: (e.target.left ? "Удалить":"Добавить") + ' розетку слева',
+              action: ()=>{
+                e.target.left ? this.removeRectPoint('left', e.target):this.addRectPoint('left', e.target)
+              }
+            },
+            {
+              name: "Удалить квадрат",
+              action: ()=>this.dropShape(e.target)
             }];
-        this.menu_visibility = true;
-        this.menu_left = window.innerWidth-e.evt.x < 205 ? window.innerWidth - 205:e.evt.x ;
-        this.menu_top = e.evt.y;
-      }
-    });
-    this.$store.commit('setEventListener',{
-      node: this.$store.getters.layer('main'),
-      event: 'contextmenu',
-      func: (e) => {
-        e.evt.preventDefault();
-        this.menu_headers = [{
-          name: (e.target.top ? "Удалить":"Добавить") + " розетку сверху",
-          action: ()=>{
-            e.target.top ? this.removeRectPoint('top', e.target):this.addRectPoint('top', e.target)
-          }
-        },
-        {
-          name: (e.target.right ? "Удалить":"Добавить") + ' розетку справа',
-          action: ()=>{
-            e.target.right ? this.removeRectPoint('right', e.target):this.addRectPoint('right', e.target)
-          }
-        },
-        {
-          name: (e.target.bottom ? "Удалить":"Добавить") + ' розетку снизу',
-          action: ()=>{
-            e.target.bottom ? this.removeRectPoint('bottom', e.target):this.addRectPoint('bottom', e.target)
-          }
-        },
-        {
-          name: (e.target.left ? "Удалить":"Добавить") + ' розетку слева',
-          action: ()=>{
-            e.target.left ? this.removeRectPoint('left', e.target):this.addRectPoint('left', e.target)
-          }
-        },
-        {
-          name: "Удалить квадрат",
-          action: ()=>this.dropShape(e.target)
-        }];
-      }
-    });
+        }
+      });
 
-    this.$store.commit('setEventListener', {
-      node: this.$store.getters.layer('main'),
-      event: 'mouseover',
-      func: (e) => {
-        e.target.pointFill = 'black';
-        e.target.draw()
-      }
-    });
-    this.$store.commit('setEventListener', {
-      node: this.$store.getters.layer('main'),
-      event: 'mouseout',
-      func: (e) => {
-        e.target.pointFill = "gray";
-        e.target.draw()
-      }
-    });
-
+      store.commit('setEventListener', {
+        node: store.getters.layer('main'),
+        event: 'mouseover',
+        func: (e) => {
+          e.target.pointFill = 'black';
+          e.target.draw()
+        }
+      });
+      store.commit('setEventListener', {
+        node: store.getters.layer('main'),
+        event: 'mouseout',
+        func: (e) => {
+          e.target.pointFill = "gray";
+          e.target.draw()
+        }
+      });
+    }
+    if (!store.getters.stage)
+    {
+      store.dispatch('initDefaultStage','canvas');
+      store.commit("addLayer",new Konva.Layer({id: 'main'}));
+    }
+    init();
+    // console.log( store.getters.stage);
   },
   updated() {
-    this.$store.getters.stage.draw();
+    store.getters.stage.draw();
+  },
+  beforeDestroy() {
+     // store.dispatch('setToLocalStorage');
   }
 }
 </script>

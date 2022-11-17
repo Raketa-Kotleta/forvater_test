@@ -3,7 +3,7 @@ import Vuex from 'vuex'
 import Konva from "konva";
 
 Vue.use(Vuex)
-
+const LOCALSTORAGE_STAGE_KEY = "STAGE_SAVE";
 export default new Vuex.Store({
   state: {
     stage: null,
@@ -12,13 +12,14 @@ export default new Vuex.Store({
   getters: {
     stage: state => state.stage,
     layers: state => state.layers[0],
-    layer: (state) => (layerId) => state.layers.find(it => it.id() == layerId),
+    layer: (state) => (layerId) => state.layers.find(it => it.attrs.id == layerId),
   },
   mutations: {
     setStage(state,stage){
-      if (stage.container != null)
         state.stage = stage;
-      else console.log(new Error('Config container is null'));
+    },
+    addLayers(state,layers){
+      state.layers = layers;
     },
     addLayer(state, layer){
       if (state.stage) {
@@ -51,7 +52,20 @@ export default new Vuex.Store({
         height: window.innerHeight,
       });
       context.commit('setStage', initStage);
-    }
+    },
+    setToLocalStorage(context){
+      const json_str = context.state.stage.toJSON()
+      window.localStorage.setItem(LOCALSTORAGE_STAGE_KEY, json_str);
+    },
+    getFromLocalStorage(context){
+      const json_str = window.localStorage.getItem(LOCALSTORAGE_STAGE_KEY);
+      const stage_obj = JSON.parse(json_str);
+      // console.log(stage_obj);
+      if (stage_obj) {
+        context.commit('setStage', Konva.Node.create(stage_obj,'canvas'));
+        context.commit('addLayers', context.state.stage.children);
+      }
+    },
   },
   modules: {
   }

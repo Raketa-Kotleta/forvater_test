@@ -1,17 +1,17 @@
 import {Line} from "konva/lib/shapes/Line";
+import {_registerNode} from "konva/lib/Global";
+
 const DEFAULT_DRAG_MODE = 'move';
 const STRETCH_DRAG_MODE = 'stretch';
 class ArrowLine extends Line{
-    #ARC_RADIUS = 2;
-    _direction;
-    _connection;
-    _dragmode;
+    #arc_radius;
     constructor(config) {
         super(config)
         config.draggable = true;
-        this._direction = config.direction;
-        this._dragmode = DEFAULT_DRAG_MODE;
-        this._connection = config.connection ?? null;
+        this.#arc_radius = config.strokeWidth;
+        this.attrs.direction = config.direction;
+        this.attrs.dragmode = DEFAULT_DRAG_MODE;
+        this.attrs.connection = config.connection ?? null;
         this.on('dragstart', this._onDragStart);
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
@@ -103,7 +103,7 @@ class ArrowLine extends Line{
             context.arc(
                 (this.points()[0]+this.points()[2])/2,
                 (this.points()[1]+this.points()[3])/2,
-                this.#ARC_RADIUS,
+                this.#arc_radius,
                 0,
                 2 * Math.PI,
                 false
@@ -150,26 +150,32 @@ class ArrowLine extends Line{
         this.dragmode = DEFAULT_DRAG_MODE;
     }
     get direction() {
-        return this._direction;
+        return this.attrs.direction;
     }
 
     set direction(value) {
-        this._direction = value;
+        this.attrs.direction = value;
     }
 
     get connection() {
-        return this._connection;
+        return this.attrs.connection;
     }
 
     set connection(value) {
-        this._connection = value;
+        this.attrs.connection = value;
     }
     get dragmode() {
-        return this._dragmode;
+        return this.attrs.dragmode;
     }
 
     set dragmode(value) {
-        this._dragmode = value;
+        this.attrs.dragmode = value;
+    }
+
+    get arc_radius() {
+        return this.arc_radius;
     }
 }
+ArrowLine.prototype.className = "ArrowLine";
+_registerNode(ArrowLine);
 export default ArrowLine;
