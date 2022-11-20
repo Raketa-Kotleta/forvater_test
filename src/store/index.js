@@ -60,9 +60,9 @@ export default new Vuex.Store({
     getFromLocalStorage(context){
       const json_str = window.localStorage.getItem(LOCALSTORAGE_STAGE_KEY);
       const stage_obj = JSON.parse(json_str);
-      // console.log(stage_obj);
+       console.log(stage_obj);
       if (stage_obj) {
-        context.commit('setStage', Konva.Node.create(stage_obj,'canvas'));
+        context.commit('setStage', Konva.Stage.create(stage_obj,'canvas'));
         context.commit('addLayers', context.state.stage.children);
       }
     },

@@ -1,12 +1,20 @@
-<script src="../node_modules/konva/lib/shapes/Arrow.js"></script>
-<template>
- <div id="app">
-   <drop-menu ref="drop_menu" :visible="menu_visibility" :top="menu_top" :left="menu_left"  :headers-array="menu_headers"></drop-menu>
-   <button @click="$store.dispatch('setToLocalStorage')">save</button>
-  <div id="canvas">
 
+<template>
+  <div id="app">
+
+    <drop-menu ref="drop_menu" :visible="menu_visibility" :top="menu_top" :left="menu_left"  :headers-array="menu_headers"></drop-menu>
+    <nav class="navbar">
+      <a class="brand" href="#">RS</a>
+      <ul>
+        <li v-for="(header,index) in navbar_headers" :key="index">
+          <router-link :to="header.to">{{header.name}}</router-link>
+        <li>
+          <button @click="$store.dispatch('setToLocalStorage')" class="btn btn-save">Save</button>
+        </li>
+      </ul>
+    </nav>
+    <router-view></router-view>
   </div>
- </div>
 </template>
 
 <script>
@@ -22,16 +30,21 @@ import store from "@/store";
 export default {
   name: 'App',
   components: {
-  DropMenu,
+    DropMenu,
   },
   data(){
     return{
-        menu_headers: [],
-        menu_visibility: false,
-        menu_top: 0,
-        menu_left: 0,
+      navbar_headers: [
+        {name:'Canvas', to: '/'},
+        {name: 'About', to: '/about'}
+      ],
+      menu_headers: [],
+      menu_top:0,
+      menu_left: 0,
+      menu_visibility: false
     }
   },
+
   methods:{
     addShape(){
       let rect = new CustomRect({
@@ -104,10 +117,6 @@ export default {
   },
   mounted() {
     store.dispatch('getFromLocalStorage');
-    // console.log(store.getters.stage.eventListeners);
-    console.log(store.getters.layer('main').children[0]);
-
-    console.log(store.getters.layer('main').children[0]);
     document.onclick = ()=>{
       this.menu_visibility = false;
     }
@@ -194,10 +203,9 @@ export default {
     // console.log( store.getters.stage);
   },
   updated() {
-    store.getters.stage.draw();
   },
   beforeDestroy() {
-     // store.dispatch('setToLocalStorage');
+    // store.dispatch('setToLocalStorage');
   }
 }
 </script>
@@ -208,5 +216,53 @@ export default {
 }
 body{
   margin: 0;
+}
+a {
+  text-decoration: none;
+}
+
+.navbar {
+  background-color: #333333;
+  display: flex;
+  align-items:center;
+}
+
+.navbar a {
+  color: #e7e7e7;
+}
+
+.navbar .brand {
+  display: block;
+  padding: 0 24px;
+  font-size: 24px;
+}
+
+.navbar ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  display: flex;
+  align-items:center;
+  justify-content: flex-start;
+}
+
+.navbar ul li a {
+  color: #e7e7e7;
+  padding: 24px;
+  display: block;
+}
+.btn{
+  border-radius: 4px;
+  padding: 12px 16px;
+  border: none;
+}
+.btn-save{
+  background-color: orange;
+}
+
+.navbar ul a:hover,
+.navbar ul a:focus,
+.navbar ul .active {
+  background-color: #272727;
 }
 </style>
