@@ -10,14 +10,17 @@ const STRETCH_DRAG_MODE = 'stretch';
 class DynamicArrow extends Arrow{
     constructor(config) {
         super(config);
+        this._init(config);
+    }
+    _init(config){
         this.attrs.dragmode = DEFAULT_DRAG_MODE;
         this.attrs.direction = config.direction;
         this.attrs.connection = config.connection ?? null;
+        this._connectionHandler = config.connectionHandler;
         this.on('dragstart', this._onDragStart);
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
     }
-
     _sceneFunc(ctx) {
         super._sceneFunc(ctx);
         ctx.beginPath();
@@ -56,12 +59,13 @@ class DynamicArrow extends Arrow{
             stroke: this.stroke(),
             draggable: this.draggable(),
             points: [],
-            direction: this.direction == 'row'?'column':'row',
+            direction: 'row',
         });
         if (Math.abs(this.points()[0] - this.points()[2]) < this.length() && Math.abs(this.points()[1] - this.points()[3]) < this.length()) {
             if (mode == 'row'){
                 this.points()[1] = this.points()[3];
                 this.direction = 'row';
+                newLine.direction = "column";
             }
             else if (mode == 'column'){
                 this.points()[0] = this.points()[2];
@@ -82,8 +86,8 @@ class DynamicArrow extends Arrow{
 
     }
     _onDragStart(e){
-        console.log(Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2));
-        if (Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2) < 20)
+        //console.log(Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2));
+        if (Math.sqrt((e.evt.x - (this.points()[2] + this.x()))**2 + (e.evt.y - (this.points()[3]+this.y()))**2) < 30)
             this.dragmode = STRETCH_DRAG_MODE;
     }
     _onDragMove(e){
@@ -103,14 +107,14 @@ class DynamicArrow extends Arrow{
     }
     _onDragEnd(){
         if (this.dragmode == STRETCH_DRAG_MODE || this.connection) {
-            this.breakline('row');
-            const socket = this.findMatches();
-            if (this.connection){
-               if (!socket)
-                   this.disconnect();
-            }
+            const socket = this._findMatches();
             if (socket){
                 this.connect(socket)
+            }
+            else{
+                if (this.connection)
+                    this.disconnect();
+                this.breakline("column");
             }
         }
         else
@@ -123,12 +127,27 @@ class DynamicArrow extends Arrow{
             );
         const group = this.parent;
         const children = group.children;
+
         group.removeChildren();
+        children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
+
         group.add(...children);
-        group.children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
-
-
         this.dragmode = DEFAULT_DRAG_MODE;
+    }
+    destroy() {
+        this.disconnect();
+        return super.destroy();
+    }
+    toObject() {
+        let obj =  super.toObject();
+        obj.attrs.connectionHandler = null;
+        if (this.connection)
+            obj.attrs.connectionHandler = {
+                elementId: this.connection.parent.id(),
+                socketId: this.connection.id(),
+            }
+
+        return obj;
     }
     connect(socket){
         this.attrs.connection = socket;
@@ -138,12 +157,20 @@ class DynamicArrow extends Arrow{
         this.notify([this.connection],it=>{it.disconnect(this)})
         this.connection = null;
     }
-    findMatches(){
+    recoverConnection(){
+        if (this._connectionHandler) {
+            console.log(this.getLayer().children.find(x=>x.id()==this._connectionHandler.elementId));
+            const socket = this.getLayer().children.find(x=>x.id()==this._connectionHandler.elementId).children.find(x=>x.id()==this._connectionHandler.socketId);
+            this.connect(socket);
+
+        }
+    }
+    _findMatches(){
         let socket = null
         let elements = this.getLayer().children.filter(it => it instanceof Element);
         for (let element of elements){
             element.children.forEach(it => {
-                if (Math.sqrt((it.parent.position().x - it.offsetX() - this.points()[2])**2 + (it.parent.position().y - it.offsetY()  - this.points()[3])**2) < 30 && it instanceof Socket && it.visible()) {
+                if (Math.sqrt((it.parent.position().x - it.offsetX() - this.points()[2])**2 + (it.parent.position().y - it.offsetY()  - this.points()[3])**2) < it.attrs.radius + 3 && it instanceof Socket && it.visible()) {
                     console.log("match");
                     socket = it;
                 }

@@ -14,7 +14,7 @@ class Socket extends Circle{
     }
     connect(arrow){
         this._connections.push(arrow);
-        this.notify(this._connections, it=>it.breakline('row'));
+        this._notifyConnections();
     }
     disconnect(arrow){
         this._connections = this._connections.filter(x=>x!=arrow);
@@ -25,16 +25,17 @@ class Socket extends Circle{
                 callback(o);
         })
     }
-    _onDragEnd(){
+    _notifyConnections(){
         this.notify(this._connections,(it)=>{
-            console.log(it.position().x, it.position().y);
-           it.update();
-            console.log(it.position().x, it.position().y);
-           if (this.id() == 'top' || this.id() == 'bottom')
-               it.breakline('column');
-           if (this.id() == 'left' || this.id() == 'right')
-               it.breakline('row');
+            it.update();
+            if (this.id() == 'top' || this.id() == 'bottom')
+                it.breakline('column');
+            if (this.id() == 'left' || this.id() == 'right')
+                it.breakline('row');
         });
+    }
+    _onDragEnd(){
+        this._notifyConnections();
         this.getLayer().draw();
     }
     get connections() {

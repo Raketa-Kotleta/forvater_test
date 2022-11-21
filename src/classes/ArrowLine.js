@@ -1,5 +1,7 @@
 import {Line} from "konva/lib/shapes/Line";
 import {_registerNode} from "konva/lib/Global";
+import Element from "@/classes/Element";
+import Socket from "@/classes/Socket";
 
 const DEFAULT_DRAG_MODE = 'move';
 const STRETCH_DRAG_MODE = 'stretch';
@@ -7,14 +9,19 @@ class ArrowLine extends Line{
     #arc_radius;
     constructor(config) {
         super(config)
+        this._init(config);
+    }
+    _init(config){
         config.draggable = true;
         this.#arc_radius = config.strokeWidth;
         this.attrs.direction = config.direction;
         this.attrs.dragmode = DEFAULT_DRAG_MODE;
         this.attrs.connection = config.connection ?? null;
+        this._connectionHandler = config.connectionHandler;
         this.on('dragstart', this._onDragStart);
         this.on('dragmove', this._onDragMove);
         this.on('dragend', this._onDragEnd);
+
     }
     indexInParent(){
         return this.parent.children.indexOf(this);
@@ -29,16 +36,22 @@ class ArrowLine extends Line{
         })
     }
     update(){
-        if (this.parent.children[this.indexInParent()-1]){
-            this.points()[0] = this.parent.children[this.indexInParent()-1].attrs.points[2] + this.parent.children[this.indexInParent()-1].x() - this.x();
-            this.points()[1] = this.parent.children[this.indexInParent()-1].attrs.points[3] + this.parent.children[this.indexInParent()-1].y() - this.y();
+        if (this.connection && this.indexInParent() == 0){
+            this.points()[0] = this.attrs.connection.parent.position().x - this.attrs.connection.offsetX();
+            this.points()[1] = this.attrs.connection.parent.position().y - this.attrs.connection.offsetY();
         }
+
+        if (this.parent.children[this.indexInParent() - 1]) {
+            this.points()[0] = this.parent.children[this.indexInParent() - 1].attrs.points[2] + this.parent.children[this.indexInParent() - 1].x() - this.x();
+            this.points()[1] = this.parent.children[this.indexInParent() - 1].attrs.points[3] + this.parent.children[this.indexInParent() - 1].y() - this.y();
+        }
+
         if (this.parent.children[this.indexInParent()+1]){
             this.points()[2] = this.parent.children[this.indexInParent()+1].attrs.points[0] + this.parent.children[this.indexInParent()+1].x() - this.x();
             this.points()[3] = this.parent.children[this.indexInParent()+1].attrs.points[1] + this.parent.children[this.indexInParent()+1].y() - this.y();
         }
     }
-    breakline(){
+    breakline(mode = 'row'){
         let newLine = new ArrowLine({
             x: 0,
             y: 0,
@@ -50,50 +63,40 @@ class ArrowLine extends Line{
             direction: this.direction == 'row' ? 'column' : 'row',
         });
         if (Math.abs(this.points()[0] - this.points()[2]) < this.length() && Math.abs(this.points()[1] - this.points()[3]) < this.length()) {
-            if (this.direction == 'row'){
+            if (this.indexInParent() == 0){
+                if (mode == 'row'){
+                    this.points()[3] = this.points()[1];
+                    this.direction = 'row';
+                    newLine.direction = 'column';
+                }
+                else if (mode == 'column'){
+                    this.points()[2] = this.points()[0];
+                    this.direction = 'column';
+                    newLine.direction = "row";
+                }
+            }else{
                 if (this.points()[1] > this.points()[3]){
-                    if (this.indexInParent() != 0){
-                        this.points()[1] = this.points()[3];
-                        this.parent.children.splice(this.indexInParent(),0, newLine);
-                    }
-                    else{
-                        this.points()[2] = this.points()[0];
-                        newLine.direction = this.direction;
-                        this.parent.children.splice(this.indexInParent()+1,0, newLine);
-                        this.direction = 'column'
-                    }
+                    this.points()[3] = this.points()[1];
                 }
                 else if(this.points()[1] < this.points()[3]){
+                    this.points()[3] = this.points()[1];
+                }
+                this.direction = "row";
+                newLine.direction = "column";
+            }
 
-                    if (this.indexInParent() != 0){
-                        this.points()[1] = this.points()[3];
-                        this.parent.children.splice(this.indexInParent(),0, newLine);
-                    }
-                    else{
-                        this.points()[2] = this.points()[0];
-                        newLine.direction = this.direction;
-                        this.parent.children.splice(this.indexInParent()+1,0, newLine);
-                        this.direction = 'column'
-                    }
+            let indexOfNewLine = 0;
+            if (this.parent.children[this.indexInParent()+1].direction == this.direction){
+                    this.parent.children.splice(this.indexInParent()+1, 0, newLine);
+                    indexOfNewLine = this.parent.children.indexOf(newLine);
+                    newLine.points()[2] = this.parent.children[indexOfNewLine + 1].attrs.points[0] + this.parent.children[indexOfNewLine + 1].x();
+                    newLine.points()[3] = this.parent.children[indexOfNewLine + 1].attrs.points[1] + this.parent.children[indexOfNewLine + 1].y();
+                    newLine.points()[0] = this.parent.children[indexOfNewLine - 1].attrs.points[2] + this.parent.children[indexOfNewLine - 1].x();
+                    newLine.points()[1] = this.parent.children[indexOfNewLine - 1].attrs.points[3] + this.parent.children[indexOfNewLine - 1].y();
                 }
-            }
-            else{
-                if (this.points()[0] > this.points()[2]){
-                    this.points()[3] = this.points()[1];
-                    this.parent.children.splice(this.indexInParent()+1,0, newLine);
+                else{
+                    this.parent.children[this.indexInParent()+1].update();
                 }
-                else if(this.points()[0] < this.points()[2]){
-                    this.points()[3] = this.points()[1];
-                    this.parent.children.splice(this.indexInParent()+1,0, newLine);
-                }
-                newLine.direction = 'column';
-                this.direction = 'row';
-            }
-            const indexOfNewLine = this.parent.children.indexOf(newLine);
-            newLine.points()[2] = this.parent.children[indexOfNewLine+1].attrs.points[0] + this.parent.children[indexOfNewLine+1].x();
-            newLine.points()[3] = this.parent.children[indexOfNewLine+1].attrs.points[1] + this.parent.children[indexOfNewLine+1].y();
-            newLine.points()[0] = this.parent.children[indexOfNewLine-1].attrs.points[2] + this.parent.children[indexOfNewLine-1].x();
-            newLine.points()[1] = this.parent.children[indexOfNewLine-1].attrs.points[3] + this.parent.children[indexOfNewLine-1].y();
         }
 
     }
@@ -112,7 +115,7 @@ class ArrowLine extends Line{
         context.fillStrokeShape(this);
     }
     _onDragStart(e){
-        if (Math.sqrt((e.evt.x - (this.points()[0] + this.x()))**2 + (e.evt.y - (this.points()[1]+this.y()))**2) < 10 && this.indexInParent() == 0)
+        if (Math.sqrt((e.evt.x - (this.points()[0] + this.x()))**2 + (e.evt.y - (this.points()[1]+this.y()))**2) < 30 && this.indexInParent() == 0)
             this.dragmode = STRETCH_DRAG_MODE;
     }
     _onDragMove(e){
@@ -132,22 +135,75 @@ class ArrowLine extends Line{
     }
 
     _onDragEnd(){
-        if (this.dragmode == STRETCH_DRAG_MODE)
-            this.breakline();
+        if (this.dragmode == STRETCH_DRAG_MODE) {
+            const socket = this._findMatches();
+            if (socket){
+                this.connect(socket);
+            }
+            else{
+                if (this.connection)
+                    this.disconnect();
+                this.breakline("column");
+            }
+        }
         else
             this.notify(
                 [this.parent.children[this.indexInParent()-1], this.parent.children[this.indexInParent()+1]],
                 (it)=>{
                     it.update();
-                    it.breakline();
+                    it.breakline("row");
                 }
             );
         const group = this.parent;
         const children = group.children;
-        children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
         group.removeChildren();
+        children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
         group.add(...children);
         this.dragmode = DEFAULT_DRAG_MODE;
+    }
+    toObject() {
+        let obj =  super.toObject();
+        obj.attrs.connectionHandler = null;
+        if (this.connection)
+            obj.attrs.connectionHandler = {
+                elementId: this.connection.parent.id(),
+                socketId: this.connection.id(),
+            }
+        return obj;
+    }
+    recoverConnection(){
+        if (this._connectionHandler) {
+            const socket = this.getLayer().children.find(x=>x.id()===this._connectionHandler.elementId).children.find(x=>x.id()===this._connectionHandler.socketId);
+            this.connect(socket);
+        }
+    }
+    connect(socket){
+        this.attrs.connection = socket;
+        this.notify([socket], it=>it.connect(this));
+    }
+    disconnect(){
+        this.notify([this.connection],it=>{it.disconnect(this)})
+        this.connection = null;
+    }
+    destroy() {
+        this.disconnect();
+        return super.destroy();
+    }
+    _findMatches(){
+        let socket = null
+        let elements = this.getLayer().children.filter(it => it instanceof Element);
+        for (let element of elements){
+            element.children.forEach(it => {
+                if (Math.sqrt((it.parent.position().x - it.offsetX() - this.points()[0])**2 + (it.parent.position().y - it.offsetY()  - this.points()[1])**2) < it.attrs.radius + 3
+                    && it instanceof Socket
+                    && it.visible()
+                    && this.indexInParent() == 0) {
+                    console.log("match");
+                    socket = it;
+                }
+            });
+        }
+        return socket;
     }
     get direction() {
         return this.attrs.direction;

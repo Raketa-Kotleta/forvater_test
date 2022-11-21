@@ -130,6 +130,13 @@ export default {
         func: (e) => {
           //e.evt.preventDefault();
           console.log(e.target.parent.findSocket);
+          if (e.target instanceof  ArrowLine || e.target instanceof  DynamicArrow)
+            this.menu_headers = [
+              {
+                name: 'Удалить стрелку',
+                action: ()=>{e.target.parent.destroy()}
+              }
+            ];
           if (e.target instanceof Konva.Rect)
             this.menu_headers = [{
               name: (e.target.parent.findSocket('top').visible() ? "Удалить":"Добавить") + " розетку сверху",
@@ -177,6 +184,11 @@ export default {
           e.target.pointFill = "gray";
           e.target.draw()
         }
+      });
+      this.$store.getters.layer('main').children.filter((it)=>!(it instanceof Element)).forEach(it=>{
+        it.children[0].recoverConnection();
+        console.log(it.children.length);
+        it.children[it.children.length - 1].recoverConnection();
       });
     }
     if (!store.getters.stage)
