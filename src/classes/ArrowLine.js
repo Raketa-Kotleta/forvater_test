@@ -36,11 +36,10 @@ class ArrowLine extends Line{
         })
     }
     update(){
-        if (this.connection && this.indexInParent() == 0){
+        if (this.connection && this.indexInParent() == 0 && this.dragmode == DEFAULT_DRAG_MODE){
             this.points()[0] = this.attrs.connection.parent.position().x - this.attrs.connection.offsetX();
             this.points()[1] = this.attrs.connection.parent.position().y - this.attrs.connection.offsetY();
         }
-
         if (this.parent.children[this.indexInParent() - 1]) {
             this.points()[0] = this.parent.children[this.indexInParent() - 1].attrs.points[2] + this.parent.children[this.indexInParent() - 1].x() - this.x();
             this.points()[1] = this.parent.children[this.indexInParent() - 1].attrs.points[3] + this.parent.children[this.indexInParent() - 1].y() - this.y();
@@ -125,7 +124,7 @@ class ArrowLine extends Line{
         if (this.direction == 'column'){
             this.y(0)
         }
-        if (this.dragmode == STRETCH_DRAG_MODE){
+        if (this.dragmode == STRETCH_DRAG_MODE || this.connection){
             this.x(0);
             this.y(0);
             this.points()[0] = e.evt.x;
