@@ -20,10 +20,10 @@
 <script>
 import Konva from "konva";
 import DropMenu from "@/components/DropMenu";
-import CustomRect from "@/classes/CustomRect";
 import ArrowLine from "@/classes/ArrowLine";
 import DynamicArrow from "@/classes/DynamicArrow";
 import store from "@/store";
+import Element from "@/classes/Element";
 
 // import DynamicArrow from "@/classes/DynamicArrow";
 // import ArrowLine from "@/classes/ArrowLine";
@@ -46,38 +46,24 @@ export default {
   },
 
   methods:{
-    addShape(){
-      let rect = new CustomRect({
-        id: store.getters.layer('main').length,
+    addElement(){
+      let element = new Element({
+        id: 'element' + store.getters.layer('main').children.filter(it => it instanceof Element).length,
         x: this.menu_left,
         y: this.menu_top,
+        fill: 'black',
         width: 100,
         height: 100,
-        pointRadius: 7,
-        pointFill: 'rgb(100,100,100)',
-        rectFill: 'white',
         stroke: 'black',
-        strokeWidth: 1,
+        strokeWidth: 2,
         draggable: true
       });
-      store.commit('addShape',{
-        layer: store.getters.layer('main'),
-        shape: rect,
-      })
-      rect.draw();
-      console.log(store.getters.layer('main').children);
-      store.getters.stage.draw();
-    },
-    dropShape(shape){
-      store.commit('dropShape', shape);
-    },
-    removeRectPoint(side,shape){
-      shape[side] = false;
-      shape.draw()
-    },
-    addRectPoint(side,shape){
-      shape[side] = true;
-      shape.draw();
+      store.commit('addGroup',{
+        container: store.getters.layer('main'),
+        group: element,
+      });
+
+      console.log(store.getters.layer('main'))
     },
     addArrow(){
       const halfwidth = 120;
@@ -112,9 +98,6 @@ export default {
 
     },
   },
-  created() {
-
-  },
   mounted() {
     store.dispatch('getFromLocalStorage');
     document.onclick = ()=>{
@@ -130,7 +113,7 @@ export default {
           if (e.target instanceof Konva.Stage)
             this.menu_headers = [{
               name: "Добавить квадрат",
-              action: this.addShape,
+              action: this.addElement,
             },
               {
                 name: "Добавить стрелку",
@@ -145,35 +128,37 @@ export default {
         node: store.getters.layer('main'),
         event: 'contextmenu',
         func: (e) => {
-          e.evt.preventDefault();
-          this.menu_headers = [{
-            name: (e.target.top ? "Удалить":"Добавить") + " розетку сверху",
-            action: ()=>{
-              e.target.top ? this.removeRectPoint('top', e.target):this.addRectPoint('top', e.target)
-            }
-          },
-            {
-              name: (e.target.right ? "Удалить":"Добавить") + ' розетку справа',
+          //e.evt.preventDefault();
+          console.log(e.target.parent.findSocket);
+          if (e.target instanceof Konva.Rect)
+            this.menu_headers = [{
+              name: (e.target.parent.findSocket('top').visible() ? "Удалить":"Добавить") + " розетку сверху",
               action: ()=>{
-                e.target.right ? this.removeRectPoint('right', e.target):this.addRectPoint('right', e.target)
+                e.target.parent.findSocket('top').visible() ? e.target.parent.dropSocket('top'):e.target.parent.addSocket('top')
               }
             },
-            {
-              name: (e.target.bottom ? "Удалить":"Добавить") + ' розетку снизу',
-              action: ()=>{
-                e.target.bottom ? this.removeRectPoint('bottom', e.target):this.addRectPoint('bottom', e.target)
-              }
-            },
-            {
-              name: (e.target.left ? "Удалить":"Добавить") + ' розетку слева',
-              action: ()=>{
-                e.target.left ? this.removeRectPoint('left', e.target):this.addRectPoint('left', e.target)
-              }
-            },
-            {
-              name: "Удалить квадрат",
-              action: ()=>this.dropShape(e.target)
-            }];
+              {
+                name: (e.target.parent.findSocket('right').visible() ? "Удалить":"Добавить") + ' розетку справа',
+                action: ()=>{
+                  e.target.parent.findSocket('right').visible() ? e.target.parent.dropSocket('right'):e.target.parent.addSocket('right')
+                }
+              },
+              {
+                name: (e.target.parent.findSocket('bottom').visible() ? "Удалить":"Добавить") + ' розетку снизу',
+                action: ()=>{
+                  e.target.parent.findSocket('bottom').visible() ? e.target.parent.dropSocket('bottom'):e.target.parent.addSocket('bottom')
+                }
+              },
+              {
+                name: (e.target.parent.findSocket('left').visible() ? "Удалить":"Добавить") + ' розетку слева',
+                action: ()=>{
+                  e.target.parent.findSocket('left').visible() ? e.target.parent.dropSocket('left'):e.target.parent.addSocket('left')
+                }
+              },
+              {
+                name: "Удалить квадрат",
+                action: ()=>{e.target.parent.destroy()},
+              }];
         }
       });
 
@@ -197,7 +182,7 @@ export default {
     if (!store.getters.stage)
     {
       store.dispatch('initDefaultStage','canvas');
-      store.commit("addLayer",new Konva.Layer({id: 'main'}));
+      store.commit("addLayer", new Konva.Layer({id: 'main'}));
     }
     init();
     // console.log( store.getters.stage);
@@ -225,6 +210,9 @@ a {
   background-color: #333333;
   display: flex;
   align-items:center;
+  position: fixed;
+  width: 100%;
+  z-index: 1;
 }
 
 .navbar a {

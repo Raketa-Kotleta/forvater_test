@@ -1,6 +1,8 @@
 import {Arrow} from "konva/lib/shapes/Arrow";
 import ArrowLine from "@/classes/ArrowLine";
 import {_registerNode} from "konva/lib/Global";
+import Element from "@/classes/Element";
+import Socket from "@/classes/Socket";
 
 const DEFAULT_DRAG_MODE = 'move';
 const STRETCH_DRAG_MODE = 'stretch';
@@ -40,8 +42,12 @@ class DynamicArrow extends Arrow{
             this.points()[0] = this.parent.children[this.indexInParent()-1].attrs.points[2] + this.parent.children[this.indexInParent()-1].x() - this.x();
             this.points()[1] = this.parent.children[this.indexInParent()-1].attrs.points[3] + this.parent.children[this.indexInParent()-1].y() - this.y();
         }
+        if (this.attrs.connection && this.dragmode == DEFAULT_DRAG_MODE){
+            this.points()[2] = this.attrs.connection.parent.position().x - this.attrs.connection.offsetX();
+            this.points()[3] = this.attrs.connection.parent.position().y - this.attrs.connection.offsetY();
+        }
     }
-    breakline(){
+    breakline(mode = "row"){
         let newLine = new ArrowLine({
             x: 0,
             y: 0,
@@ -50,23 +56,28 @@ class DynamicArrow extends Arrow{
             stroke: this.stroke(),
             draggable: this.draggable(),
             points: [],
-            direction: this.direction,
+            direction: this.direction == 'row'?'column':'row',
         });
         if (Math.abs(this.points()[0] - this.points()[2]) < this.length() && Math.abs(this.points()[1] - this.points()[3]) < this.length()) {
-            if (this.direction == 'row'){
-                this.points()[0] = this.points()[2];
-                this.direction = 'column';
-            }
-            else{
+            if (mode == 'row'){
                 this.points()[1] = this.points()[3];
                 this.direction = 'row';
             }
-            this.parent.children.splice(this.indexInParent(),0, newLine);
-            const indexOfNewLine = this.parent.children.indexOf(newLine);
-            newLine.points()[2] = this.parent.children[indexOfNewLine+1].attrs.points[0] + this.parent.children[indexOfNewLine+1].x();
-            newLine.points()[3] = this.parent.children[indexOfNewLine+1].attrs.points[1] + this.parent.children[indexOfNewLine+1].y();
-            newLine.points()[0] = this.parent.children[indexOfNewLine-1].attrs.points[2] + this.parent.children[indexOfNewLine-1].x();
-            newLine.points()[1] = this.parent.children[indexOfNewLine-1].attrs.points[3] + this.parent.children[indexOfNewLine-1].y();
+            else if (mode == 'column'){
+                this.points()[0] = this.points()[2];
+                this.direction = 'column';
+            }
+            if (this.parent.children[this.indexInParent()-1].direction == this.direction){
+                this.parent.children.splice(this.indexInParent(),0, newLine);
+                const indexOfNewLine = this.parent.children.indexOf(newLine);
+                newLine.points()[2] = this.parent.children[indexOfNewLine+1].attrs.points[0] + this.parent.children[indexOfNewLine+1].x();
+                newLine.points()[3] = this.parent.children[indexOfNewLine+1].attrs.points[1] + this.parent.children[indexOfNewLine+1].y();
+                newLine.points()[0] = this.parent.children[indexOfNewLine-1].attrs.points[2] + this.parent.children[indexOfNewLine-1].x();
+                newLine.points()[1] = this.parent.children[indexOfNewLine-1].attrs.points[3] + this.parent.children[indexOfNewLine-1].y();
+            }else{
+                this.parent.children[this.indexInParent()-1].update();
+            }
+
         }
 
     }
@@ -82,7 +93,7 @@ class DynamicArrow extends Arrow{
         if (this.direction == 'column'){
             this.y(0);
         }
-        if (this.dragmode == STRETCH_DRAG_MODE){
+        if (this.dragmode == STRETCH_DRAG_MODE || this.connection){
             this.x(0);
             this.y(0);
             this.points()[2] = e.evt.x;
@@ -91,8 +102,17 @@ class DynamicArrow extends Arrow{
         }
     }
     _onDragEnd(){
-        if (this.dragmode == STRETCH_DRAG_MODE)
-            this.breakline();
+        if (this.dragmode == STRETCH_DRAG_MODE || this.connection) {
+            this.breakline('row');
+            const socket = this.findMatches();
+            if (this.connection){
+               if (!socket)
+                   this.disconnect();
+            }
+            if (socket){
+                this.connect(socket)
+            }
+        }
         else
             this.notify(
                 [this.parent.children[this.indexInParent()-1], this.parent.children[this.indexInParent()+1]],
@@ -106,7 +126,30 @@ class DynamicArrow extends Arrow{
         group.removeChildren();
         group.add(...children);
         group.children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
+
+
         this.dragmode = DEFAULT_DRAG_MODE;
+    }
+    connect(socket){
+        this.attrs.connection = socket;
+        this.notify([socket], it=>it.connect(this));
+    }
+    disconnect(){
+        this.notify([this.connection],it=>{it.disconnect(this)})
+        this.connection = null;
+    }
+    findMatches(){
+        let socket = null
+        let elements = this.getLayer().children.filter(it => it instanceof Element);
+        for (let element of elements){
+            element.children.forEach(it => {
+                if (Math.sqrt((it.parent.position().x - it.offsetX() - this.points()[2])**2 + (it.parent.position().y - it.offsetY()  - this.points()[3])**2) < 30 && it instanceof Socket && it.visible()) {
+                    console.log("match");
+                    socket = it;
+                }
+            });
+        }
+        return socket;
     }
     toJSON() {
         return super.toJSON();
