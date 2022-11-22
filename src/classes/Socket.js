@@ -17,7 +17,8 @@ class Socket extends Circle{
         this._notifyConnections();
     }
     disconnect(arrow){
-        this._connections = this._connections.filter(x=>x!=arrow);
+        if (this.connections.find(x=>x==arrow))
+            this._connections = this._connections.filter(x=>x!=arrow);
     }
     notify(objects, callback){
         objects.forEach(o=>{
@@ -38,6 +39,14 @@ class Socket extends Circle{
         this._notifyConnections();
         this.getLayer().draw();
     }
+    destroy() {
+        this.notify(this.connections,(x)=>{x.disconnect()});
+        return super.destroy();
+    }
+    die(){
+        this.notify(this.connections,(x)=>{x.disconnect()});
+    }
+
     get connections() {
         return this._connections;
     }

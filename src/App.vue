@@ -1,7 +1,6 @@
 
 <template>
   <div id="app">
-
     <drop-menu ref="drop_menu" :visible="menu_visibility" :top="menu_top" :left="menu_left"  :headers-array="menu_headers"></drop-menu>
     <nav class="navbar">
       <a class="brand" href="#">RS</a>
@@ -36,7 +35,7 @@ export default {
     return{
       navbar_headers: [
         {name:'Canvas', to: '/'},
-        {name: 'About', to: '/about'}
+        {name: 'Instruction', to: '/about'}
       ],
       menu_headers: [],
       menu_top:0,
@@ -112,7 +111,7 @@ export default {
           e.evt.preventDefault();
           if (e.target instanceof Konva.Stage)
             this.menu_headers = [{
-              name: "Добавить квадрат",
+              name: "Добавить элемент",
               action: this.addElement,
             },
               {
@@ -163,7 +162,7 @@ export default {
                 }
               },
               {
-                name: "Удалить квадрат",
+                name: "Удалить элемент",
                 action: ()=>{e.target.parent.destroy()},
               }];
         }
@@ -224,7 +223,7 @@ a {
   align-items:center;
   position: fixed;
   width: 100%;
-  z-index: 1;
+  z-index: 5;
 }
 
 .navbar a {

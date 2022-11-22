@@ -28,10 +28,10 @@ class DynamicArrow extends Arrow{
         ctx.closePath();
         ctx.fillStrokeShape(this);
     }
-    indexInParent(){
+    _indexInParent(){
         return this.parent.children.indexOf(this);
     }
-    length(){
+    _length(){
         return Math.sqrt((this.points()[0] - this.points()[2])**2+(this.points()[1]-this.points()[3])**2);
     }
     notify(objects, callback){
@@ -41,9 +41,9 @@ class DynamicArrow extends Arrow{
         })
     }
     update(){
-        if (this.parent.children[this.indexInParent()-1]){
-            this.points()[0] = this.parent.children[this.indexInParent()-1].attrs.points[2] + this.parent.children[this.indexInParent()-1].x() - this.x();
-            this.points()[1] = this.parent.children[this.indexInParent()-1].attrs.points[3] + this.parent.children[this.indexInParent()-1].y() - this.y();
+        if (this.parent.children[this._indexInParent()-1]){
+            this.points()[0] = this.parent.children[this._indexInParent()-1].attrs.points[2] + this.parent.children[this._indexInParent()-1].x() - this.x();
+            this.points()[1] = this.parent.children[this._indexInParent()-1].attrs.points[3] + this.parent.children[this._indexInParent()-1].y() - this.y();
         }
         if (this.attrs.connection && this.dragmode == DEFAULT_DRAG_MODE){
             this.points()[2] = this.attrs.connection.parent.position().x - this.attrs.connection.offsetX();
@@ -61,7 +61,7 @@ class DynamicArrow extends Arrow{
             points: [],
             direction: 'row',
         });
-        if (Math.abs(this.points()[0] - this.points()[2]) < this.length() && Math.abs(this.points()[1] - this.points()[3]) < this.length()) {
+        if (Math.abs(this.points()[0] - this.points()[2]) < this._length() && Math.abs(this.points()[1] - this.points()[3]) < this._length()) {
             if (mode == 'row'){
                 this.points()[1] = this.points()[3];
                 this.direction = 'row';
@@ -71,15 +71,15 @@ class DynamicArrow extends Arrow{
                 this.points()[0] = this.points()[2];
                 this.direction = 'column';
             }
-            if (this.parent.children[this.indexInParent()-1].direction == this.direction){
-                this.parent.children.splice(this.indexInParent(),0, newLine);
+            if (this.parent.children[this._indexInParent()-1].direction == this.direction){
+                this.parent.children.splice(this._indexInParent(),0, newLine);
                 const indexOfNewLine = this.parent.children.indexOf(newLine);
                 newLine.points()[2] = this.parent.children[indexOfNewLine+1].attrs.points[0] + this.parent.children[indexOfNewLine+1].x();
                 newLine.points()[3] = this.parent.children[indexOfNewLine+1].attrs.points[1] + this.parent.children[indexOfNewLine+1].y();
                 newLine.points()[0] = this.parent.children[indexOfNewLine-1].attrs.points[2] + this.parent.children[indexOfNewLine-1].x();
                 newLine.points()[1] = this.parent.children[indexOfNewLine-1].attrs.points[3] + this.parent.children[indexOfNewLine-1].y();
             }else{
-                this.parent.children[this.indexInParent()-1].update();
+                this.parent.children[this._indexInParent()-1].update();
             }
 
         }
@@ -119,7 +119,7 @@ class DynamicArrow extends Arrow{
         }
         else
             this.notify(
-                [this.parent.children[this.indexInParent()-1], this.parent.children[this.indexInParent()+1]],
+                [this.parent.children[this._indexInParent()-1], this.parent.children[this._indexInParent()+1]],
                 (it)=>{
                     it.update();
                     it.breakline();
@@ -129,7 +129,7 @@ class DynamicArrow extends Arrow{
         const children = group.children;
 
         group.removeChildren();
-        children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
+        children.filter(it=>it._length() == 0).forEach(it=>it.destroy());
 
         group.add(...children);
         this.dragmode = DEFAULT_DRAG_MODE;
@@ -154,7 +154,7 @@ class DynamicArrow extends Arrow{
         this.notify([socket], it=>it.connect(this));
     }
     disconnect(){
-        this.notify([this.connection],it=>{it.disconnect(this)})
+        this.notify([this.connection],it=>{it.disconnect(this)});
         this.connection = null;
     }
     recoverConnection(){
