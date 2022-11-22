@@ -30,13 +30,8 @@ class Element extends Konva.Group{
             this.add(this._createSocket('right',config));
             this.add(this._createSocket('bottom',config));
             this.add(this._createSocket('left',config));
-<<<<<<< HEAD
-        }
-
-=======
 
         }
->>>>>>> 126855a (work arrow vers 1)
         this.on('dragend', this._onDragEnd);
     }
     toObject() {
@@ -54,11 +49,7 @@ class Element extends Konva.Group{
             radius: config.strokeWidth+4,
             offsetX: 0,
             offsetY: 0,
-<<<<<<< HEAD
             visible: this._getSockets().filter(x=>x.isVisible()).length > 0 ? false:true,
-=======
-            visible: false,
->>>>>>> 126855a (work arrow vers 1)
         }
         switch (side){
             case 'top': {
@@ -86,33 +77,24 @@ class Element extends Konva.Group{
            it.dispatchEvent(new Event('dragend'));
         });
     }
-<<<<<<< HEAD
     _getSockets(){
         return this.children.filter(it=>it instanceof Socket);
     }
     _getRect(){
         return this.children.find(it=>it instanceof Konva.Rect);
     }
-    findSocket(side){
-        return this._getSockets().find(it=>it.id() == side);
-=======
-    findSocket(side){
-        return this.children.filter(it=>it instanceof Socket).find(it=>it.id() == side);
->>>>>>> 126855a (work arrow vers 1)
+    findSocket(side) {
+        return this._getSockets().find(it => it.id() == side);
     }
     addSocket(side){
         console.log(this.findSocket(side).visible(true));
     }
     dropSocket(side){
-<<<<<<< HEAD
         if (this._getSockets().filter(it=>it.isVisible()).length > 1) {
             const s = this.findSocket(side);
             s.die();
             s.visible(false);
         }
-=======
-        this.findSocket(side).visible(false);
->>>>>>> 126855a (work arrow vers 1)
     }
     notify(objects, callback){
         objects.forEach(o=>{

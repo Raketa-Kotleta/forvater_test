@@ -111,11 +111,7 @@ export default {
           e.evt.preventDefault();
           if (e.target instanceof Konva.Stage)
             this.menu_headers = [{
-<<<<<<< HEAD
               name: "Добавить элемент",
-=======
-              name: "Добавить квадрат",
->>>>>>> 126855a (work arrow vers 1)
               action: this.addElement,
             },
               {
@@ -133,7 +129,6 @@ export default {
         func: (e) => {
           //e.evt.preventDefault();
           console.log(e.target.parent.findSocket);
-<<<<<<< HEAD
           if (e.target instanceof  ArrowLine || e.target instanceof  DynamicArrow)
             this.menu_headers = [
               {
@@ -141,8 +136,6 @@ export default {
                 action: ()=>{e.target.parent.destroy()}
               }
             ];
-=======
->>>>>>> 126855a (work arrow vers 1)
           if (e.target instanceof Konva.Rect)
             this.menu_headers = [{
               name: (e.target.parent.findSocket('top').visible() ? "Удалить":"Добавить") + " розетку сверху",
@@ -169,11 +162,7 @@ export default {
                 }
               },
               {
-<<<<<<< HEAD
                 name: "Удалить элемент",
-=======
-                name: "Удалить квадрат",
->>>>>>> 126855a (work arrow vers 1)
                 action: ()=>{e.target.parent.destroy()},
               }];
         }
@@ -234,11 +223,7 @@ a {
   align-items:center;
   position: fixed;
   width: 100%;
-<<<<<<< HEAD
   z-index: 5;
-=======
-  z-index: 1;
->>>>>>> 126855a (work arrow vers 1)
 }
 
 .navbar a {

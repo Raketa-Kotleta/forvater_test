@@ -63,53 +63,27 @@ class DynamicArrow extends Arrow{
             stroke: this.stroke(),
             draggable: this.draggable(),
             points: [],
-<<<<<<< HEAD
             direction: 'row',
         });
         if (Math.abs(this.points()[0] - this.points()[2]) < this._length() && Math.abs(this.points()[1] - this.points()[3]) < this._length()) {
-            if (mode == 'row'){
+            if (mode == 'row') {
                 this.points()[1] = this.points()[3];
                 this.direction = 'row';
                 newLine.direction = "column";
-            }
-            else if (mode == 'column'){
+            } else if (mode == 'column') {
                 this.points()[0] = this.points()[2];
                 this.direction = 'column';
             }
-            if (this.parent.children[this._indexInParent()-1].direction == this.direction){
-                this.parent.children.splice(this._indexInParent(),0, newLine);
+            if (this.parent.children[this._indexInParent() - 1].direction == this.direction) {
+                this.parent.children.splice(this._indexInParent(), 0, newLine);
                 const indexOfNewLine = this.parent.children.indexOf(newLine);
-                newLine.points()[2] = this.parent.children[indexOfNewLine+1].attrs.points[0] + this.parent.children[indexOfNewLine+1].x();
-                newLine.points()[3] = this.parent.children[indexOfNewLine+1].attrs.points[1] + this.parent.children[indexOfNewLine+1].y();
-                newLine.points()[0] = this.parent.children[indexOfNewLine-1].attrs.points[2] + this.parent.children[indexOfNewLine-1].x();
-                newLine.points()[1] = this.parent.children[indexOfNewLine-1].attrs.points[3] + this.parent.children[indexOfNewLine-1].y();
-            }else{
-                this.parent.children[this._indexInParent()-1].update();
+                newLine.points()[2] = this.parent.children[indexOfNewLine + 1].attrs.points[0] + this.parent.children[indexOfNewLine + 1].x();
+                newLine.points()[3] = this.parent.children[indexOfNewLine + 1].attrs.points[1] + this.parent.children[indexOfNewLine + 1].y();
+                newLine.points()[0] = this.parent.children[indexOfNewLine - 1].attrs.points[2] + this.parent.children[indexOfNewLine - 1].x();
+                newLine.points()[1] = this.parent.children[indexOfNewLine - 1].attrs.points[3] + this.parent.children[indexOfNewLine - 1].y();
+            } else {
+                this.parent.children[this._indexInParent() - 1].update();
             }
-=======
-            direction: this.direction == 'row'?'column':'row',
-        });
-        if (Math.abs(this.points()[0] - this.points()[2]) < this.length() && Math.abs(this.points()[1] - this.points()[3]) < this.length()) {
-            if (mode == 'row'){
-                this.points()[1] = this.points()[3];
-                this.direction = 'row';
-            }
-            else if (mode == 'column'){
-                this.points()[0] = this.points()[2];
-                this.direction = 'column';
-            }
-            if (this.parent.children[this.indexInParent()-1].direction == this.direction){
-                this.parent.children.splice(this.indexInParent(),0, newLine);
-                const indexOfNewLine = this.parent.children.indexOf(newLine);
-                newLine.points()[2] = this.parent.children[indexOfNewLine+1].attrs.points[0] + this.parent.children[indexOfNewLine+1].x();
-                newLine.points()[3] = this.parent.children[indexOfNewLine+1].attrs.points[1] + this.parent.children[indexOfNewLine+1].y();
-                newLine.points()[0] = this.parent.children[indexOfNewLine-1].attrs.points[2] + this.parent.children[indexOfNewLine-1].x();
-                newLine.points()[1] = this.parent.children[indexOfNewLine-1].attrs.points[3] + this.parent.children[indexOfNewLine-1].y();
-            }else{
-                this.parent.children[this.indexInParent()-1].update();
-            }
->>>>>>> 126855a (work arrow vers 1)
-
         }
 
     }
@@ -135,7 +109,6 @@ class DynamicArrow extends Arrow{
     }
     _onDragEnd(){
         if (this.dragmode == STRETCH_DRAG_MODE || this.connection) {
-<<<<<<< HEAD
             const socket = this._findMatches();
             if (socket){
                 this.connect(socket)
@@ -145,17 +118,6 @@ class DynamicArrow extends Arrow{
                     this.disconnect();
                 this.breakline("column");
             }
-=======
-            this.breakline('row');
-            const socket = this.findMatches();
-            if (this.connection){
-               if (!socket)
-                   this.disconnect();
-            }
-            if (socket){
-                this.connect(socket)
-            }
->>>>>>> 126855a (work arrow vers 1)
         }
         else
             this.notify(
@@ -172,7 +134,6 @@ class DynamicArrow extends Arrow{
         children.filter(it=>it._length() == 0).forEach(it=>it.destroy());
 
         group.add(...children);
-<<<<<<< HEAD
         this.dragmode = DEFAULT_DRAG_MODE;
     }
     destroy() {
@@ -190,19 +151,12 @@ class DynamicArrow extends Arrow{
 
         return obj;
     }
-=======
-        group.children.filter(it=>it.length() == 0).forEach(it=>it.destroy());
 
-
-        this.dragmode = DEFAULT_DRAG_MODE;
-    }
->>>>>>> 126855a (work arrow vers 1)
     connect(socket){
         this.attrs.connection = socket;
         this.notify([socket], it=>it.connect(this));
     }
     disconnect(){
-<<<<<<< HEAD
         this.notify([this.connection],it=>{it.disconnect(this)});
         this.connection = null;
     }
@@ -215,21 +169,11 @@ class DynamicArrow extends Arrow{
         }
     }
     _findMatches(){
-=======
-        this.notify([this.connection],it=>{it.disconnect(this)})
-        this.connection = null;
-    }
-    findMatches(){
->>>>>>> 126855a (work arrow vers 1)
         let socket = null
         let elements = this.getLayer().children.filter(it => it instanceof Element);
         for (let element of elements){
             element.children.forEach(it => {
-<<<<<<< HEAD
                 if (Math.sqrt((it.parent.position().x - it.offsetX() - this.points()[2])**2 + (it.parent.position().y - it.offsetY()  - this.points()[3])**2) < it.attrs.radius + 3 && it instanceof Socket && it.visible()) {
-=======
-                if (Math.sqrt((it.parent.position().x - it.offsetX() - this.points()[2])**2 + (it.parent.position().y - it.offsetY()  - this.points()[3])**2) < 30 && it instanceof Socket && it.visible()) {
->>>>>>> 126855a (work arrow vers 1)
                     console.log("match");
                     socket = it;
                 }
